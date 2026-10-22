@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#070b12">
+  <meta name="description" content="坦克大战 TANK BATTLE — 一款纯 HTML/CSS/JavaScript 打造的复古街机坦克游戏。守住鹰徽，击退钢铁洪流。">
+  <title>坦克大战 · TANK BATTLE</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="ambient" aria-hidden="true">
+    <div class="ambient-grid"></div>
+    <div class="ambient-glow ambient-glow--amber"></div>
+    <div class="ambient-glow ambient-glow--teal"></div>
+  </div>
+
+  <main class="cabinet" aria-label="坦克大战游戏">
+    <header class="hud-top">
+      <div class="brand">
+        <span class="brand-cn">坦克大战</span>
+        <span class="brand-en">TANK BATTLE</span>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">SCORE</span>
+          <strong class="stat-value" id="score">000000</strong>
+        </div>
+        <div class="stat">
+          <span class="stat-label">HI-SCORE</span>
+          <strong class="stat-value stat-value--dim" id="hiscore">000000</strong>
+        </div>
+        <div class="stat">
+          <span class="stat-label">LEVEL</span>
+          <strong class="stat-value" id="level">01</strong>
+        </div>
+        <div class="stat">
+          <span class="stat-label">ENEMY</span>
+          <strong class="stat-value stat-value--red" id="remaining">06</strong>
+        </div>
+        <div class="stat">
+          <span class="stat-label">LIVES</span>
+          <strong class="stat-value stat-value--lives" id="lives">▮▮▮</strong>
+        </div>
+      </div>
+
+      <button class="icon-btn" id="soundBtn" type="button" aria-label="关闭声音" title="声音 (M)">
+        <span id="soundIcon" aria-hidden="true">♪</span>
+      </button>
+    </header>
+
+    <section class="screen" id="screen" aria-label="游戏画布">
+      <canvas id="game" width="624" height="624" aria-label="坦克大战游戏画面">
+        你的浏览器不支持 Canvas，请更换现代浏览器后重试。
+      </canvas>
+      <div class="screen-tint" aria-hidden="true"></div>
+      <div class="scanlines" aria-hidden="true"></div>
+      <div class="screen-vignette" aria-hidden="true"></div>
+      <div class="corner corner--tl" aria-hidden="true"></div>
+      <div class="corner corner--tr" aria-hidden="true"></div>
+      <div class="corner corner--bl" aria-hidden="true"></div>
+      <div class="corner corner--br" aria-hidden="true"></div>
+
+      <div class="banner" id="banner" aria-live="polite">
+        <span class="banner-kicker" id="bannerKicker">MISSION 01</span>
+        <strong class="banner-title" id="bannerTitle">沙漠前哨</strong>
+        <span class="banner-sub" id="bannerSub">守住鹰徽</span>
+      </div>
+
+      <div class="overlay" id="overlay">
+        <div class="menu-card">
+          <div class="kicker"><i></i><span>STEEL FRONT · 1990</span><i></i></div>
+          <h1 class="game-title"><span>坦克</span><span class="title-accent">大战</span></h1>
+          <p class="game-title-en">TANK BATTLE</p>
+          <p class="tagline">孤军深入，守住最后的鹰徽。</p>
+
+          <div class="brief" role="list">
+            <div role="listitem"><b>任务</b><span>击退 3 波敌军</span></div>
+            <div role="listitem"><b>移动</b><span>WASD / 方向键</span></div>
+            <div role="listitem"><b>开火</b><span>SPACE / J</span></div>
+            <div role="listitem"><b>暂停</b><span>P / ESC</span></div>
+          </div>
+
+          <button class="btn btn--primary" type="button" data-action="start">
+            <span>开始战斗</span><i aria-hidden="true">▶</i>
+          </button>
+
+          <p class="tip">砖墙可摧毁 · 钢板不可穿透 · 河流阻挡坦克</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="hud-bottom">
+      <div class="mission-line">
+        <span class="pulse-dot" aria-hidden="true"></span>
+        <span id="missionText">任务 // 守住鹰徽</span>
+      </div>
+      <div class="buffs" id="buffs" aria-live="polite"></div>
+      <div class="key-hints">
+        <kbd>WASD</kbd> 移动
+        <kbd>SPACE</kbd> 开火
+        <kbd>P</kbd> 暂停
+      </div>
+    </footer>
+  </main>
+
+  <section class="touch-ui" id="touchUI" aria-label="触屏操作">
+    <div class="dpad" aria-label="方向键">
+      <button class="dpad-btn dpad-btn--up" type="button" data-dir="up" aria-label="向上">▲</button>
+      <button class="dpad-btn dpad-btn--left" type="button" data-dir="left" aria-label="向左">◀</button>
+      <span class="dpad-center" aria-hidden="true"></span>
+      <button class="dpad-btn dpad-btn--right" type="button" data-dir="right" aria-label="向右">▶</button>
+      <button class="dpad-btn dpad-btn--down" type="button" data-dir="down" aria-label="向下">▼</button>
+    </div>
+    <button class="fire-btn" id="fireBtn" type="button" aria-label="开火">
+      <span>FIRE</span>
+      <small>开火</small>
+    </button>
+  </section>
+
+  <p class="page-foot">HTML5 CANVAS · 无外部依赖 · 键盘与触屏均可游玩</p>
+
+  <script src="js/game.js"></script>
+</body>
+</html>
