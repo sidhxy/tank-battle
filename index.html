@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#070b12">
-  <meta name="description" content="坦克大战 TANK BATTLE — 一款纯 HTML/CSS/JavaScript 打造的复古街机坦克游戏。守住鹰徽，击退钢铁洪流。">
+  <meta name="description" content="坦克大战 TANK BATTLE — 一款纯 HTML/CSS/JavaScript 打造的复古街机坦克游戏。30 个战区、逐关解锁、每命三格装甲与三连发火力。">
   <title>坦克大战 · TANK BATTLE</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
@@ -41,6 +41,10 @@
           <strong class="stat-value stat-value--red" id="remaining">06</strong>
         </div>
         <div class="stat">
+          <span class="stat-label">HULL</span>
+          <strong class="stat-value stat-value--hull" id="hull">▰▰▰</strong>
+        </div>
+        <div class="stat">
           <span class="stat-label">LIVES</span>
           <strong class="stat-value stat-value--lives" id="lives">▮▮▮</strong>
         </div>
@@ -75,19 +79,23 @@
           <h1 class="game-title"><span>坦克</span><span class="title-accent">大战</span></h1>
           <p class="game-title-en">TANK BATTLE</p>
           <p class="tagline">孤军深入，守住最后的鹰徽。</p>
+          <p class="menu-progress" id="menuProgress">战役进度 01 / 30</p>
 
           <div class="brief" role="list">
-            <div role="listitem"><b>任务</b><span>击退 3 波敌军</span></div>
+            <div role="listitem"><b>任务</b><span>推进 30 个战区</span></div>
             <div role="listitem"><b>移动</b><span>WASD / 方向键</span></div>
             <div role="listitem"><b>开火</b><span>SPACE / J</span></div>
             <div role="listitem"><b>暂停</b><span>P / ESC</span></div>
           </div>
 
           <button class="btn btn--primary" type="button" data-action="start">
-            <span>开始战斗</span><i aria-hidden="true">▶</i>
+            <span id="startLabel">开始战斗</span><i aria-hidden="true">▶</i>
+          </button>
+          <button class="btn btn--ghost" type="button" data-action="levels">
+            <span>选择关卡</span><i aria-hidden="true">▦</i>
           </button>
 
-          <p class="tip">砖墙可摧毁 · 钢板不可穿透 · 河流阻挡坦克</p>
+          <p class="tip">装甲可承受 3 次攻击 · 击毁敌军可解锁下一关</p>
         </div>
       </div>
     </section>

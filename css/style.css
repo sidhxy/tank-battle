@@ -193,6 +193,8 @@ button { font-family: inherit; }
 
 .stat-value--dim { color: #9fb0c2; }
 .stat-value--red { color: var(--red); text-shadow: 0 0 12px rgba(255, 92, 77, 0.3); }
+.stat-value--hull { color: var(--teal); font-size: 13px; letter-spacing: 0.08em; text-shadow: 0 0 12px rgba(79, 227, 208, 0.28); }
+.stat-value--hull.is-low { color: var(--red); text-shadow: 0 0 12px rgba(255, 92, 77, 0.4); }
 .stat-value--lives { color: var(--amber); font-size: 13px; letter-spacing: 0.1em; }
 
 .icon-btn {
@@ -316,6 +318,7 @@ button { font-family: inherit; }
 
 .menu-card {
   width: min(94%, 430px);
+  margin-block: auto;
   text-align: center;
   animation: cardIn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
@@ -381,6 +384,15 @@ button { font-family: inherit; }
   color: #b7c4d3;
   font-size: clamp(10px, 1.65vw, 13px);
   letter-spacing: 0.16em;
+}
+
+.menu-progress {
+  margin: -8px 0 13px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.24em;
+  color: var(--teal);
+  opacity: 0.86;
 }
 
 .brief {
@@ -481,10 +493,125 @@ button { font-family: inherit; }
   letter-spacing: 0.08em;
 }
 
+.btn--ghost i {
+  font-style: normal;
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+/* level select */
+
+.level-card {
+  width: min(96%, 560px);
+  margin-block: auto;
+  text-align: center;
+  animation: cardIn 0.4s ease both;
+}
+
+.level-kicker {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.36em;
+  color: var(--amber);
+}
+
+.level-title {
+  margin: 0;
+  font-size: clamp(24px, 5vw, 34px);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.level-progress {
+  margin: 7px 0 14px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  color: var(--teal);
+}
+
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+  max-height: min(50vh, 350px);
+  padding: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.level-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 48px;
+  padding: 5px 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.035);
+  color: #d5e0eb;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+}
+
+.level-node:hover:not(:disabled) {
+  border-color: var(--amber);
+  background: rgba(255, 179, 71, 0.1);
+  transform: translateY(-1px);
+}
+
+.level-node.is-cleared {
+  border-color: rgba(79, 227, 208, 0.55);
+  background: rgba(79, 227, 208, 0.07);
+}
+
+.level-node.is-locked {
+  opacity: 0.34;
+  cursor: not-allowed;
+}
+
+.level-node-index {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--amber);
+}
+
+.level-node.is-cleared .level-node-index { color: var(--teal); }
+
+.level-node-name {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  font-size: 8px;
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.level-node-meta {
+  font-family: var(--mono);
+  font-size: 6px;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+.level-node.is-cleared .level-node-meta { color: var(--teal); }
+
+.level-card .btn--ghost { margin-top: 10px; }
+
 /* result / pause cards */
 
 .result-card {
   width: min(94%, 410px);
+  margin-block: auto;
   text-align: center;
   animation: cardIn 0.4s ease both;
 }
@@ -836,11 +963,18 @@ kbd {
 
   .game-title { font-size: clamp(38px, 11.5vw, 52px); }
   .tagline { margin: 9px 0 12px; }
+  .menu-progress { margin: -5px 0 10px; font-size: 7px; letter-spacing: 0.16em; }
   .brief { margin-bottom: 12px; }
   .brief > div { padding: 7px 9px; }
   .brief span { font-size: 10px; }
   .btn { min-height: 43px; font-size: 13px; }
   .tip { margin-top: 9px; }
+  .level-grid { gap: 4px; max-height: 27vh; }
+  .level-node { min-height: 42px; padding: 4px 2px; }
+  .level-node-index { font-size: 11px; }
+  .level-node-name { font-size: 7px; }
+  .level-node-meta { font-size: 5.5px; }
+  .level-progress { margin: 5px 0 10px; }
   .page-foot { display: none; }
 }
 

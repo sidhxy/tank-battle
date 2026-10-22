@@ -43,80 +43,17 @@
     white: '#f4f8fc'
   };
 
-  const LEVELS = [
-    {
-      name: '沙漠前哨',
-      subtitle: '守住鹰徽',
-      total: 6,
-      maxActive: 4,
-      spawnInterval: 2.5,
-      speedMul: 1,
-      pool: ['grunt', 'grunt', 'scout', 'grunt', 'scout', 'grunt'],
-      map: [
-        '.............',
-        '..BB.....BB..',
-        '..BB.BBB.BB..',
-        '.....B.B.....',
-        '.BB..B.B..BB.',
-        '.BB.......BB.',
-        '..B..SSS..B..',
-        '..B.......B..',
-        '.BB..BBB..BB.',
-        '.BB..B.B..BB.',
-        '.....B.B.....',
-        '..BB.B.B.BB..',
-        '..BB.....BB..'
-      ]
-    },
-    {
-      name: '钢铁回廊',
-      subtitle: '突破第二道防线',
-      total: 8,
-      maxActive: 4,
-      spawnInterval: 2.2,
-      speedMul: 1.04,
-      pool: ['grunt', 'scout', 'grunt', 'armor', 'scout', 'grunt', 'armor', 'scout'],
-      map: [
-        '.............',
-        '.SS.......SS.',
-        '.S.BBBBBBB.S.',
-        '...B.....B...',
-        '.B.B.WWW.B.B.',
-        '.B...W.W...B.',
-        '.B.B.WWW.B.B.',
-        '...B.....B...',
-        '.S.BBBBBBB.S.',
-        '.S.........S.',
-        '..BB.....BB..',
-        '..BB.BBB.BB..',
-        '..BB.....BB..'
-      ]
-    },
-    {
-      name: '钢铁洪流',
-      subtitle: '最后一战',
-      total: 10,
-      maxActive: 5,
-      spawnInterval: 1.9,
-      speedMul: 1.08,
-      pool: ['armor', 'scout', 'grunt', 'armor', 'scout', 'grunt', 'armor', 'scout', 'grunt', 'armor'],
-      map: [
-        '.............',
-        '.BBBB.B.BBBB.',
-        '.B..B.B.B..B.',
-        '.B.BB...BB.B.',
-        '.B.B..S..B.B.',
-        '.B.BBBBBBB.B.',
-        '.B.........B.',
-        '.BBBB.B.BBBB.',
-        '....B.B.B....',
-        '.BB.B...B.BB.',
-        '.BB.BB.BB.BB.',
-        '....B...B....',
-        '..BB.....BB..'
-      ]
-    }
+  const TOTAL_LEVELS = 30;
+  const LEVEL_NAMES = [
+    '沙漠前哨', '荒原铁轨', '峡谷伏击', '破晓河谷', '废弃工厂',
+    '钢铁回廊', '焦土阵地', '夜袭油库', '断桥防线', '沙暴隘口',
+    '丛林沼泽', '雨林哨站', '泥沼陷阱', '隐秘弹药库', '河谷要塞',
+    '极寒冻原', '冰封补给线', '白夜前线', '冻土迷宫', '冰原堡垒',
+    '熔岩高地', '火山灰烬', '熔炉工厂', '岩浆裂谷', '赤色要塞',
+    '天穹轨道', '轨道电梯', '星环基地', '最后屏障', '终焉核心'
   ];
+  const SECTOR_NAMES = ['荒漠', '工厂', '雨林', '冻原', '火山', '天穹'];
+  let LEVELS = [];
 
   const ENEMY_TYPES = {
     grunt: {
@@ -188,6 +125,7 @@
   const hiscoreEl = document.getElementById('hiscore');
   const levelEl = document.getElementById('level');
   const remainingEl = document.getElementById('remaining');
+  const hullEl = document.getElementById('hull');
   const livesEl = document.getElementById('lives');
   const buffsEl = document.getElementById('buffs');
   const missionEl = document.getElementById('missionText');
@@ -240,6 +178,149 @@
     try {
       localStorage.setItem('tank-battle-hi', String(score));
     } catch (_) { /* private mode */ }
+  }
+
+  // -------------------------------------------------------
+  // Campaign: 30 generated sectors
+  // -------------------------------------------------------
+  const PROGRESS_KEY = 'tank-battle-progress';
+
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function generateLevelMap(index) {
+    const rng = mulberry32((0x51ed2701 ^ Math.imul(index + 1, 0x9e3779b9)) >>> 0);
+    const grid = Array.from({ length: ROWS }, () => Array(COLS).fill('.'));
+
+    const verticalLanes = [
+      [0, 6, 12],
+      [0, 4, 8, 12],
+      [0, 5, 9, 12],
+      [0, 3, 7, 11],
+      [0, 2, 6, 10, 12]
+    ][index % 5];
+    const horizontalLanes = [
+      [2, 6, 10],
+      [1, 5, 9],
+      [3, 6, 9],
+      [2, 5, 8, 11]
+    ][Math.floor(index / 5) % 4];
+    const vset = new Set(verticalLanes);
+    const hset = new Set(horizontalLanes);
+
+    const keep = (r, c) =>
+      r === 0 || r === 12 || vset.has(c) || hset.has(r) ||
+      (r >= 10 && c >= 3 && c <= 9);
+
+    const paint = (r, c, w, h, ch) => {
+      for (let dr = 0; dr < h; dr++) {
+        for (let dc = 0; dc < w; dc++) {
+          const rr = r + dr;
+          const cc = c + dc;
+          if (rr < 1 || rr > 9 || cc < 1 || cc > 5 || keep(rr, cc)) continue;
+          grid[rr][cc] = ch;
+          const mc = COLS - 1 - cc;
+          if (!keep(rr, mc)) grid[rr][mc] = ch;
+        }
+      }
+    };
+
+    const density = 0.34 + Math.min(0.29, index * 0.01);
+    for (let r = 3; r <= 9; r++) {
+      for (let c = 1; c <= 5; c++) {
+        if (keep(r, c) || grid[r][c] !== '.') continue;
+        if (rng() > density) continue;
+
+        const roll = rng();
+        let ch = 'B';
+        if (roll < 0.1 + index * 0.004) ch = 'S';
+        else if (roll < 0.19 + index * 0.002 && index >= 5) ch = 'W';
+        else if (roll < 0.29) ch = 'T';
+
+        const shape = rng();
+        if (shape < 0.38) paint(r, c, 1, 2, ch);
+        else if (shape < 0.7) paint(r, c, 2, 1, ch);
+        else if (shape < 0.9) paint(r, c, 2, 2, ch);
+        else paint(r, c, 1, 1, ch);
+      }
+    }
+
+    return grid.map((row) => row.join(''));
+  }
+
+  function buildLevels() {
+    return Array.from({ length: TOTAL_LEVELS }, (_, index) => {
+      const total = Math.min(26, 6 + Math.floor(index * 0.72));
+      const armorChance = 0.1 + Math.min(0.32, index * 0.012);
+      const pool = [];
+      for (let i = 0; i < total; i++) {
+        const roll = Math.random();
+        if (roll < armorChance) pool.push('armor');
+        else if (roll < armorChance + 0.25) pool.push('scout');
+        else pool.push('grunt');
+      }
+
+      return {
+        name: LEVEL_NAMES[index],
+        subtitle: `${SECTOR_NAMES[Math.floor(index / 5)]} · 第 ${pad2(index + 1)} 战区`,
+        total,
+        maxActive: Math.min(8, 4 + Math.floor(index / 7)),
+        spawnInterval: Math.max(1.15, 2.55 - index * 0.05),
+        speedMul: 1 + index * 0.009,
+        hpBonus: Math.floor(index / 6),
+        fireRate: 1 + index * 0.016,
+        bulletSpeed: 285 + index * 3.8,
+        aggression: 0.03 + index * 0.001,
+        powerupChance: 0.24 + index * 0.002,
+        scoreMul: 1 + Math.floor(index / 5) * 0.12,
+        pool,
+        map: generateLevelMap(index)
+      };
+    });
+  }
+
+  LEVELS = buildLevels();
+
+  function loadProgress() {
+    let unlocked = 1;
+    let cleared = [];
+    try {
+      const raw = JSON.parse(localStorage.getItem(PROGRESS_KEY) || 'null');
+      if (raw && typeof raw === 'object') {
+        unlocked = Math.max(1, Math.min(TOTAL_LEVELS, Number(raw.unlocked) || 1));
+        if (Array.isArray(raw.cleared)) {
+          cleared = [...new Set(raw.cleared
+            .map((n) => Number(n))
+            .filter((n) => Number.isInteger(n) && n >= 0 && n < TOTAL_LEVELS))];
+          cleared.sort((a, b) => a - b);
+        }
+      }
+    } catch (_) { /* private mode or corrupt value */ }
+    for (const level of cleared) unlocked = Math.max(unlocked, Math.min(TOTAL_LEVELS, level + 2));
+    return { unlocked, cleared };
+  }
+
+  const progress = loadProgress();
+
+  function saveProgress() {
+    try {
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+    } catch (_) { /* private mode */ }
+  }
+
+  function unlockLevel(index) {
+    const next = Math.min(TOTAL_LEVELS, index + 2);
+    if (next > progress.unlocked) progress.unlocked = next;
+    if (!progress.cleared.includes(index)) progress.cleared.push(index);
+    progress.cleared.sort((a, b) => a - b);
+    saveProgress();
   }
 
   // -------------------------------------------------------
@@ -349,6 +430,12 @@
       this.tone(big ? 86 : 120, big ? 0.5 : 0.28, 'sine', big ? 0.2 : 0.12, 30);
     },
 
+    armorHit() {
+      this.noise(0.16, 0.16, 2200, 'bandpass');
+      this.tone(320, 0.14, 'square', 0.09, 120);
+      this.tone(760, 0.1, 'triangle', 0.05, 480, 0.02);
+    },
+
     playerHit() {
       this.noise(0.55, 0.3, 800, 'lowpass');
       this.tone(180, 0.55, 'sawtooth', 0.16, 34);
@@ -425,7 +512,14 @@
     speedMul: 1,
     baseAlive: true,
     rapid: 0,
+    multi: 0,
     freeze: 0,
+    hpBonus: 0,
+    fireRate: 1,
+    bulletSpeed: 285,
+    aggression: 0.035,
+    powerupChance: 0.23,
+    scoreMul: 1,
     respawnTimer: 0,
     introTimer: 0,
     overTimer: 0,
@@ -556,18 +650,21 @@
       isPlayer: true,
       dead: false,
       speed: 156,
-      hp: 1,
+      hp: 3,
+      maxHp: 3,
       shield: 2.5,
       spawnTimer: 0.55,
       fireCd: 0,
       muzzle: 0,
       tread: 0,
-      flash: 0
+      flash: 0,
+      invuln: 0
     };
   }
 
   function createEnemy(type, col, row) {
     const def = ENEMY_TYPES[type] || ENEMY_TYPES.grunt;
+    const hp = def.hp + (G.hpBonus || 0);
     return {
       x: col * TILE + (TILE - 36) / 2,
       y: row * TILE + (TILE - 36) / 2,
@@ -579,16 +676,16 @@
       def,
       dead: false,
       speed: def.speed * G.speedMul,
-      hp: def.hp,
-      maxHp: def.hp,
+      hp,
+      maxHp: hp,
       shield: 0,
       spawnTimer: 0.85,
       fireCd: rand(0.9, 1.8),
-      fireInterval: def.fireInterval,
+      fireInterval: Math.max(0.45, def.fireInterval / (G.fireRate || 1)),
       muzzle: 0,
       tread: 0,
       flash: 0,
-      score: def.score,
+      score: Math.round(def.score * (G.scoreMul || 1)),
       ai: {
         turn: rand(0.8, 1.7),
         stuck: 0
@@ -612,25 +709,35 @@
   // -------------------------------------------------------
   // Level lifecycle
   // -------------------------------------------------------
-  function startGame() {
+  function startGame(startLevel = null) {
     Sound.ensure();
     Sound.start();
     clearInput();
+    const fallback = Math.min(TOTAL_LEVELS - 1, Math.max(0, progress.unlocked - 1));
+    const index = Number.isInteger(startLevel) ? clamp(startLevel, 0, TOTAL_LEVELS - 1) : fallback;
     G.score = 0;
     G.lives = 3;
     G.stats = { kills: 0, shots: 0, hits: 0 };
     G.rapid = 0;
+    G.multi = 0;
     G.freeze = 0;
-    G.level = 0;
-    loadLevel(0);
+    G.level = index;
+    loadLevel(index);
   }
 
   function loadLevel(index) {
-    const cfg = LEVELS[index];
-    G.level = index;
+    const safeIndex = clamp(index, 0, LEVELS.length - 1);
+    const cfg = LEVELS[safeIndex];
+    G.level = safeIndex;
     G.speedMul = cfg.speedMul;
     G.maxActive = cfg.maxActive;
     G.spawnInterval = cfg.spawnInterval;
+    G.hpBonus = cfg.hpBonus;
+    G.fireRate = cfg.fireRate;
+    G.bulletSpeed = cfg.bulletSpeed;
+    G.aggression = cfg.aggression;
+    G.powerupChance = cfg.powerupChance;
+    G.scoreMul = cfg.scoreMul;
     G.baseAlive = true;
     G.ending = false;
     G.overTimer = 0;
@@ -638,6 +745,7 @@
     G.levelClearTimer = 0;
     G.respawnTimer = 0;
     G.rapid = 0;
+    G.multi = 0;
     G.freeze = 0;
     G.shake = 0;
     G.flash = 0;
@@ -649,6 +757,7 @@
     G.tanks = [];
 
     loadMap(cfg.map);
+    clearInput();
 
     G.player = createPlayer(4, 12);
     G.player.shield = 2.8;
@@ -660,13 +769,8 @@
     G.state = 'intro';
 
     hideOverlay();
-    showBanner(`MISSION ${pad2(index + 1)}`, cfg.name, cfg.subtitle);
+    showBanner(`MISSION ${pad2(safeIndex + 1)}`, cfg.name, cfg.subtitle);
     updateHud(true);
-  }
-
-  function startGameOverlayless() {
-    hideOverlay();
-    startGame();
   }
 
   function nextLevel() {
@@ -678,7 +782,7 @@
 
   function restartGame() {
     hideOverlay();
-    startGame();
+    startGame(G.level);
   }
 
   function goMenu() {
@@ -686,9 +790,17 @@
     G.state = 'menu';
     G.score = 0;
     G.lives = 3;
+    G.level = 0;
     G.stats = { kills: 0, shots: 0, hits: 0 };
     G.rapid = 0;
+    G.multi = 0;
     G.freeze = 0;
+    G.hpBonus = 0;
+    G.fireRate = 1;
+    G.bulletSpeed = 285;
+    G.aggression = 0.035;
+    G.powerupChance = 0.23;
+    G.scoreMul = 1;
     G.ending = false;
     G.overTimer = 0;
     G.pending = [];
@@ -712,6 +824,7 @@
       t.ai.turn = 99;
     }
     overlay.innerHTML = MENU_HTML;
+    syncMenuMeta();
     showOverlay();
     updateHud(true);
   }
@@ -751,6 +864,45 @@
       </div>`;
   }
 
+  function syncMenuMeta() {
+    const meta = document.getElementById('menuProgress');
+    if (meta) meta.textContent = `战役进度 ${pad2(progress.unlocked)} / ${TOTAL_LEVELS}`;
+    const label = document.getElementById('startLabel');
+    if (label) label.textContent = progress.unlocked > 1 ? `继续第 ${pad2(progress.unlocked)} 关` : '开始战斗';
+  }
+
+  function levelNodesHtml() {
+    return LEVELS.map((cfg, index) => {
+      const unlocked = index < progress.unlocked;
+      const cleared = progress.cleared.includes(index);
+      const current = index === progress.unlocked - 1;
+      const classes = ['level-node'];
+      if (cleared) classes.push('is-cleared');
+      if (!unlocked) classes.push('is-locked');
+      const status = cleared ? 'CLEAR' : !unlocked ? 'LOCK' : current ? 'NEXT' : 'OPEN';
+      return `<button class="${classes.join(' ')}" type="button" data-action="level" data-level="${index}" ${unlocked ? '' : 'disabled'} aria-label="第 ${index + 1} 关 ${cfg.name}${unlocked ? '' : '，未解锁'}">
+        <span class="level-node-index">${pad2(index + 1)}</span>
+        <span class="level-node-name">${cfg.name}</span>
+        <span class="level-node-meta">${status}</span>
+      </button>`;
+    }).join('');
+  }
+
+  function showLevelSelect() {
+    G.state = 'menu';
+    clearInput();
+    showOverlay();
+    overlay.innerHTML = `
+      <div class="level-card">
+        <p class="level-kicker">MISSION ARCHIVE</p>
+        <h2 class="level-title">选择关卡</h2>
+        <p class="level-progress">已解锁 ${pad2(progress.unlocked)} / ${TOTAL_LEVELS} · 已通关 ${pad2(progress.cleared.length)}</p>
+        <div class="level-grid">${levelNodesHtml()}</div>
+        <button class="btn btn--ghost" type="button" data-action="menu">返回主菜单</button>
+      </div>`;
+    updateHud(true);
+  }
+
   function showPause() {
     showOverlay();
     overlay.innerHTML = `
@@ -761,23 +913,26 @@
         ${summaryGrid()}
         <button class="btn btn--primary" type="button" data-action="resume"><span>继续战斗</span><i>▶</i></button>
         <button class="btn btn--ghost" type="button" data-action="restart">重新开始</button>
+        <button class="btn btn--ghost" type="button" data-action="levels"><span>选择关卡</span><i>▦</i></button>
         <button class="btn btn--ghost" type="button" data-action="menu">返回主菜单</button>
       </div>`;
   }
 
   function showLevelClear() {
+    unlockLevel(G.level);
     const isLast = G.level >= LEVELS.length - 1;
     showOverlay();
     overlay.innerHTML = `
       <div class="result-card">
         <p class="result-kicker">SECTOR CLEARED</p>
         <h2 class="result-title is-good">第 ${G.level + 1} 关完成</h2>
-        <p class="result-sub">${isLast ? '所有防线已突破' : '补给已投放：生命 +1'}</p>
+        <p class="result-sub">${isLast ? '所有防线已突破' : '补给已投放：生命 +1 · 下一关已解锁'}</p>
         <div class="result-score"><span>SCORE</span><b>${pad6(G.score)}</b></div>
         ${summaryGrid()}
         <button class="btn btn--primary" type="button" data-action="${isLast ? 'victory' : 'next'}">
           <span>${isLast ? '完成战役' : `进入第 ${G.level + 2} 关`}</span><i>▶</i>
         </button>
+        <button class="btn btn--ghost" type="button" data-action="levels"><span>选择关卡</span><i>▦</i></button>
         <button class="btn btn--ghost" type="button" data-action="menu">返回主菜单</button>
       </div>`;
   }
@@ -798,6 +953,7 @@
         <div class="result-score"><span>FINAL SCORE</span><b>${pad6(G.score)}</b></div>
         ${summaryGrid()}
         <button class="btn btn--primary" type="button" data-action="restart"><span>再战一次</span><i>▶</i></button>
+        <button class="btn btn--ghost" type="button" data-action="levels"><span>选择关卡</span><i>▦</i></button>
         <button class="btn btn--ghost" type="button" data-action="menu">返回主菜单</button>
       </div>`;
     Sound.gameOver();
@@ -807,6 +963,7 @@
   function showVictory() {
     G.state = 'victory';
     G.ending = false;
+    unlockLevel(TOTAL_LEVELS - 1);
     if (G.score > G.hi) {
       G.hi = G.score;
       saveHiScore(G.hi);
@@ -816,10 +973,11 @@
       <div class="result-card">
         <p class="result-kicker">CAMPAIGN COMPLETE</p>
         <h2 class="result-title is-good">全线肃清</h2>
-        <p class="result-sub">三波敌军全部击退，鹰徽依然飘扬。</p>
+        <p class="result-sub">30 个战区全部肃清，鹰徽依然飘扬。</p>
         <div class="result-score"><span>FINAL SCORE</span><b>${pad6(G.score)}</b></div>
         ${summaryGrid()}
         <button class="btn btn--primary" type="button" data-action="restart"><span>再战一次</span><i>▶</i></button>
+        <button class="btn btn--ghost" type="button" data-action="levels"><span>选择关卡</span><i>▦</i></button>
         <button class="btn btn--ghost" type="button" data-action="menu">返回主菜单</button>
       </div>`;
     Sound.victory();
@@ -829,10 +987,13 @@
   function updateHud(force = false) {
     const remaining = G.state === 'menu' ? LEVELS[0].total : remainingEnemies();
     const livesText = G.lives > 0 ? '▮'.repeat(G.lives) : '—';
+    const hull = G.player ? Math.max(0, G.player.hp) : 0;
+    const maxHull = G.player ? G.player.maxHp : 3;
+    const hullText = G.player ? '▰'.repeat(hull) + '▱'.repeat(Math.max(0, maxHull - hull)) : '—';
     const shield = G.player && G.player.shield > 0 ? Math.ceil(G.player.shield) : 0;
     const sig = [
-      G.state, G.score, G.hi, G.level, G.lives, remaining,
-      Math.ceil(G.rapid), Math.ceil(G.freeze), shield
+      G.state, G.score, G.hi, G.level, G.lives, remaining, hull, maxHull,
+      Math.ceil(G.rapid), Math.ceil(G.multi), Math.ceil(G.freeze), shield
     ].join('|');
 
     if (!force && sig === G.hudSignature) return;
@@ -842,9 +1003,14 @@
     hiscoreEl.textContent = pad6(Math.max(G.hi, G.score));
     levelEl.textContent = pad2(G.level + 1);
     remainingEl.textContent = pad2(Math.min(remaining, 99));
+    if (hullEl) {
+      hullEl.textContent = hullText;
+      hullEl.classList.toggle('is-low', Boolean(G.player) && hull <= 1);
+    }
     livesEl.textContent = livesText;
 
     const chips = [];
+    if (G.multi > 0) chips.push(`<span class="chip chip--amber">MULTI 3x <i>${Math.ceil(G.multi)}s</i></span>`);
     if (G.rapid > 0) chips.push(`<span class="chip chip--amber">RAPID <i>${Math.ceil(G.rapid)}s</i></span>`);
     if (G.freeze > 0) chips.push(`<span class="chip">FREEZE <i>${Math.ceil(G.freeze)}s</i></span>`);
     if (shield > 0) chips.push(`<span class="chip">SHIELD <i>${shield}s</i></span>`);
@@ -959,6 +1125,18 @@
     switch (button.dataset.action) {
       case 'start':
         startGame();
+        break;
+      case 'levels':
+        showLevelSelect();
+        break;
+      case 'level':
+        {
+          const index = Number(button.dataset.level);
+          if (Number.isInteger(index) && index < progress.unlocked) {
+            hideOverlay();
+            startGame(index);
+          }
+        }
         break;
       case 'resume':
         togglePause();
@@ -1082,9 +1260,9 @@
       px = G.player.x + G.player.w / 2 - (t.x + t.w / 2);
       py = G.player.y + G.player.h / 2 - (t.y + t.h / 2);
       const dist = Math.hypot(px, py);
-      if (dist < 300 || Math.random() < 0.35) target = { x: G.player.x + G.player.w / 2, y: G.player.y + G.player.h / 2 };
+      if (dist < 300 || Math.random() < 0.35 + G.aggression) target = { x: G.player.x + G.player.w / 2, y: G.player.y + G.player.h / 2 };
     } else if (G.player) {
-      if (Math.random() < 0.55) target = { x: G.player.x + G.player.w / 2, y: G.player.y + G.player.h / 2 };
+      if (Math.random() < 0.55 + G.aggression) target = { x: G.player.x + G.player.w / 2, y: G.player.y + G.player.h / 2 };
     }
 
     const tx = target.x - (t.x + t.w / 2);
@@ -1134,7 +1312,7 @@
     if ((t.dir === 1 || t.dir === 3) && Math.abs(dy) < 30) return true;
     if (Math.abs(dx) < 34 && Math.abs(dy) < 230) return true;
     if (Math.abs(dy) < 34 && Math.abs(dx) < 230) return true;
-    return Math.random() < 0.035;
+    return Math.random() < G.aggression;
   }
 
   // -------------------------------------------------------
@@ -1144,8 +1322,9 @@
     if (t.fireCd > 0 || t.spawnTimer > 0 || t.dead) return;
     if (t.isPlayer && G.ending) return;
 
+    const spread = t.isPlayer && G.multi > 0 ? [-0.18, 0, 0.18] : [0];
     if (t.isPlayer) {
-      const maxBullets = G.rapid > 0 ? 3 : 2;
+      const maxBullets = (G.rapid > 0 ? 3 : 2) * (G.multi > 0 ? 3 : 1);
       const active = G.bullets.reduce((n, b) => n + (b.owner === 'player' && b.alive ? 1 : 0), 0);
       if (active >= maxBullets) return;
     }
@@ -1153,24 +1332,31 @@
     const dir = DIRS[t.dir];
     const cx = t.x + t.w / 2 + dir.x * 24;
     const cy = t.y + t.h / 2 + dir.y * 24;
-    const speed = t.isPlayer ? (G.rapid > 0 ? 510 : 430) : 285;
-    G.bullets.push({
-      x: cx,
-      y: cy,
-      dx: dir.x,
-      dy: dir.y,
-      speed,
-      owner: t.isPlayer ? 'player' : 'enemy',
-      color: t.isPlayer ? COLORS.teal : (t.type === 'scout' ? COLORS.amber : COLORS.red),
-      alive: true,
-      life: 3,
-      size: t.isPlayer ? 4 : 3.4
-    });
+    const speed = t.isPlayer ? (G.rapid > 0 ? 510 : 430) : G.bulletSpeed;
+
+    for (const offset of spread) {
+      const cos = Math.cos(offset);
+      const sin = Math.sin(offset);
+      const dx = dir.x * cos - dir.y * sin;
+      const dy = dir.x * sin + dir.y * cos;
+      G.bullets.push({
+        x: cx,
+        y: cy,
+        dx,
+        dy,
+        speed,
+        owner: t.isPlayer ? 'player' : 'enemy',
+        color: t.isPlayer ? COLORS.teal : (t.type === 'scout' ? COLORS.amber : COLORS.red),
+        alive: true,
+        life: 3,
+        size: t.isPlayer ? 4 : 3.4
+      });
+      if (t.isPlayer) G.stats.shots++;
+    }
 
     t.fireCd = t.isPlayer ? (G.rapid > 0 ? 0.145 : 0.31) : t.fireInterval * rand(0.9, 1.35);
     t.muzzle = 0.09;
 
-    if (t.isPlayer) G.stats.shots++;
     Sound.shoot(t.isPlayer);
 
     addMuzzleSmoke(cx - dir.x * 6, cy - dir.y * 6, dir, t.isPlayer ? COLORS.teal : COLORS.amber);
@@ -1278,7 +1464,7 @@
 
   function damagePlayer() {
     if (!G.player || G.player.dead) return;
-    if (G.player.shield > 0 || G.player.spawnTimer > 0) {
+    if (G.player.shield > 0 || G.player.spawnTimer > 0 || G.player.invuln > 0) {
       spawnSpark(
         G.player.x + G.player.w / 2,
         G.player.y + G.player.h / 2,
@@ -1288,8 +1474,24 @@
       return;
     }
 
-    const px = G.player.x + G.player.w / 2;
-    const py = G.player.y + G.player.h / 2;
+    const p = G.player;
+    const px = p.x + p.w / 2;
+    const py = p.y + p.h / 2;
+    p.hp = Math.max(0, p.hp - 1);
+    p.invuln = 0.75;
+    p.flash = 0.16;
+
+    if (p.hp > 0) {
+      spawnSpark(px, py, '#ffd37a', 10);
+      G.shake = Math.max(G.shake, 6);
+      G.floaters.push({
+        x: px, y: py - 10, text: '装甲 -1', color: '#ffd37a', life: 0.8, maxLife: 0.8
+      });
+      Sound.armorHit();
+      updateHud(true);
+      return;
+    }
+
     G.player = null;
     G.lives = Math.max(0, G.lives - 1);
     spawnExplosion(px, py, 1.5, COLORS.teal);
@@ -1343,7 +1545,7 @@
     G.floaters.push({
       x, y: y - 8, text: `+${enemy.score}`, color: '#ffd37a', life: 1.05, maxLife: 1.05
     });
-    if (Math.random() < 0.23) spawnPowerup(x, y);
+    if (Math.random() < G.powerupChance) spawnPowerup(x, y);
     updateHud(true);
   }
 
@@ -1382,6 +1584,7 @@
     const label = {
       shield: '护盾 +8s',
       rapid: '急速射击 +10s',
+      multi: '三连发 +12s',
       life: '生命 +1',
       bomb: '全屏轰炸',
       freeze: '时间冻结 +5s'
@@ -1393,6 +1596,9 @@
         break;
       case 'rapid':
         G.rapid = Math.max(G.rapid, 10);
+        break;
+      case 'multi':
+        G.multi = Math.max(G.multi, 12);
         break;
       case 'life':
         G.lives = Math.min(5, G.lives + 1);
@@ -1429,10 +1635,11 @@
   function spawnPowerup(x, y) {
     const roll = Math.random();
     let type = 'shield';
-    if (roll > 0.82) type = 'life';
-    else if (roll > 0.64) type = 'bomb';
-    else if (roll > 0.46) type = 'freeze';
-    else if (roll > 0.24) type = 'rapid';
+    if (roll > 0.86) type = 'life';
+    else if (roll > 0.72) type = 'bomb';
+    else if (roll > 0.58) type = 'freeze';
+    else if (roll > 0.43) type = 'rapid';
+    else if (roll > 0.26) type = 'multi';
     G.powerups.push({
       x,
       y,
@@ -1452,6 +1659,7 @@
     p.fireCd = Math.max(0, p.fireCd - dt);
     p.muzzle = Math.max(0, p.muzzle - dt);
     p.flash = Math.max(0, p.flash - dt);
+    p.invuln = Math.max(0, p.invuln - dt);
     p.shield = Math.max(0, p.shield - dt);
     p.spawnTimer = Math.max(0, p.spawnTimer - dt);
     if (p.spawnTimer > 0) return;
@@ -1677,6 +1885,7 @@
     if (G.state !== 'playing' || G.ending) return;
 
     G.rapid = Math.max(0, G.rapid - dt);
+    G.multi = Math.max(0, G.multi - dt);
     G.freeze = Math.max(0, G.freeze - dt);
 
     if (!G.player && G.respawnTimer > 0) {
@@ -2157,7 +2366,8 @@
     const cx = t.x + t.w / 2;
     const cy = t.y + t.h / 2;
     const pal = t.isPlayer ? PLAYER_PALETTE : t.def;
-    const flicker = t.spawnTimer > 0 && Math.floor(G.time * 18) % 2 === 0;
+    const invulnBlink = t.isPlayer && t.invuln > 0 && Math.floor(G.time * 22) % 2 === 0;
+    const flicker = (t.spawnTimer > 0 && Math.floor(G.time * 18) % 2 === 0) || invulnBlink;
 
     ctx.save();
     // Ground shadow
@@ -2284,14 +2494,16 @@
       ctx.restore();
     }
 
-    if (!t.isPlayer && t.hp < t.maxHp) {
+    if (t.hp < t.maxHp) {
       const pipW = 5;
       const total = t.maxHp * pipW + (t.maxHp - 1) * 2;
       const startX = cx - total / 2;
       ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
       ctx.fillRect(startX - 2, cy - 29, total + 4, 5);
       for (let i = 0; i < t.maxHp; i++) {
-        ctx.fillStyle = i < t.hp ? COLORS.amber : 'rgba(255, 255, 255, 0.12)';
+        ctx.fillStyle = i < t.hp
+          ? (t.isPlayer ? COLORS.teal : COLORS.amber)
+          : 'rgba(255, 255, 255, 0.12)';
         ctx.fillRect(startX + i * (pipW + 2), cy - 27.5, pipW, 2);
       }
     }
@@ -2355,6 +2567,19 @@
         ctx.closePath();
         ctx.fillStyle = '#ffe28a';
         ctx.fill();
+        break;
+      case 'multi':
+        ctx.fillStyle = '#9fffe7';
+        for (let i = -1; i <= 1; i++) {
+          const bx = i * 5;
+          ctx.beginPath();
+          ctx.moveTo(bx, -8);
+          ctx.lineTo(bx + 2.3, -3);
+          ctx.lineTo(bx - 2.3, -3);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillRect(bx - 1.5, -1, 3, 8);
+        }
         break;
       case 'life':
         ctx.fillStyle = '#ff7a72';
@@ -2599,7 +2824,14 @@
     G.levelClearArmed = false;
     G.levelClearTimer = 0;
     G.rapid = 0;
+    G.multi = 0;
     G.freeze = 0;
+    G.hpBonus = 0;
+    G.fireRate = 1;
+    G.bulletSpeed = 285;
+    G.aggression = 0.035;
+    G.powerupChance = 0.23;
+    G.scoreMul = 1;
     G.bullets = [];
     G.powerups = [];
     G.particles = [];
@@ -2619,6 +2851,7 @@
       t.dir = 2;
       t.ai.turn = 99;
     }
+    syncMenuMeta();
     updateHud(true);
   }
 
