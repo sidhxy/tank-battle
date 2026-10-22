@@ -29,6 +29,11 @@ html, body {
   min-height: 100%;
 }
 
+html {
+  background: var(--bg);
+  overscroll-behavior: none;
+}
+
 body {
   min-height: 100svh;
   display: flex;
@@ -38,6 +43,8 @@ body {
   gap: 14px;
   padding: 24px 16px 14px;
   overflow-x: hidden;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
   color: var(--text);
   background:
     radial-gradient(ellipse 80% 55% at 50% -10%, #122236 0%, transparent 62%),
@@ -839,7 +846,7 @@ kbd {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 0 20px 10px;
+  padding: 0 20px calc(10px + env(safe-area-inset-bottom));
 }
 
 .dpad {
@@ -922,7 +929,7 @@ kbd {
   body {
     justify-content: flex-start;
     gap: 0;
-    padding: 0;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
   }
 
   .cabinet {
@@ -996,7 +1003,10 @@ kbd {
 @media (hover: none), (pointer: coarse) {
   .touch-ui { display: flex; }
   .page-foot { display: none; }
-  body { justify-content: flex-start; padding-bottom: 8px; }
+  body {
+    justify-content: flex-start;
+    padding-bottom: 8px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

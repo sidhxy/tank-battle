@@ -68,6 +68,22 @@ python -m http.server 8080
 # 浏览器打开 http://localhost:8080
 ```
 
+## Android APK
+
+网页版同时通过 [Capacitor](https://capacitorjs.com/) 打包为 Android 应用，应用 ID 为 `com.sidhxy.tankbattle`，锁定竖屏并隐藏系统栏，适合手机触屏游玩。
+
+- 已构建的调试安装包：[GitHub Releases](https://github.com/sidhxy/tank-battle/releases/latest)（`tank-battle-1.0.0-debug.apk`）
+- 要求：Node.js 22+、JDK 21、Android SDK Platform 36 / Build Tools 35 或 36。
+- 构建命令：
+
+```bash
+npm install
+npm run android:debug
+# 产物：android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+`npm run cap:sync` 会把网页资源复制到 `www/` 并同步到 Android 工程。Android 端额外处理了返回键暂停、切后台自动暂停、音频恢复和安全区；调试包使用 Android 默认 debug 签名，可直接侧载安装。
+
 ## 项目结构
 
 ```text
@@ -76,10 +92,16 @@ tank-battle/
 ├── css/
 │   └── style.css       # 复古街机视觉、CRT 效果与响应式布局
 ├── js/
-│   └── game.js         # 游戏循环、30 关生成、AI、碰撞、音效与渲染
+│   ├── game.js         # 游戏循环、30 关生成、AI、碰撞、音效与渲染
+│   └── native.js       # Capacitor 返回键、后台暂停与音频恢复
 ├── assets/
 │   └── favicon.svg
 ├── docs/               # README 展示截图
+├── android/            # Capacitor Android 工程
+├── scripts/
+│   └── build-www.mjs   # 生成 www/ 静态资源
+├── capacitor.config.json
+├── package.json
 ├── LICENSE
 └── README.md
 ```

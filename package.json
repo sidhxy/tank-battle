@@ -1,0 +1,25 @@
+{
+  "name": "tank-battle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "坦克大战 · TANK BATTLE — HTML5 Canvas 街机坦克游戏与 Android 套壳",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build:www": "node scripts/build-www.mjs",
+    "cap:sync": "npm run build:www && cap sync android",
+    "android:debug": "npm run cap:sync && cd android && gradlew.bat assembleDebug",
+    "android:release": "npm run cap:sync && cd android && gradlew.bat assembleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3"
+  }
+}

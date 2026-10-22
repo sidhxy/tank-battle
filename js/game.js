@@ -2855,6 +2855,18 @@
     updateHud(true);
   }
 
+  // Small bridge for the native Android shell.
+  window.TankBattle = {
+    isPlaying: () => G.state === 'playing',
+    pause: () => {
+      if (G.state === 'playing') togglePause();
+    },
+    goMenu: () => {
+      if (G.state !== 'menu') goMenu();
+    },
+    resumeAudio: () => Sound.ensure()
+  };
+
   initMenuScene();
   requestAnimationFrame(frame);
 })();

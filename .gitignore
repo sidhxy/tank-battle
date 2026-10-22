@@ -8,3 +8,20 @@ Desktop.ini
 .vscode/
 .idea/
 node_modules/
+.toolchains/
+
+# Capacitor generated web bundle
+www/
+dist/
+
+# Android build output and local SDK config
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/public/
+
+# Signing material must never be committed
+*.keystore
+*.jks
+keystore.properties
